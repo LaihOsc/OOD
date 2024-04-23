@@ -102,9 +102,6 @@ public class MusicOrganizerController {
 	 */
 	public void removeSoundClips(Album targetAlbum, List<SoundClip> songs)
 	{
-		if(targetAlbum==root) // Decline to remove songs from root.
-			return;
-		
 		boolean bModified = false;
 		for(SoundClip song : songs)
 		{

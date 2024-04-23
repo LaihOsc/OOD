@@ -98,20 +98,31 @@ public class Album {
 	public void addSong(SoundClip song)
 	{
 		assertNotNull(song);
-		assertFalse(songList.contains(song));
-		
+
+		if(songList.contains(song))
+			return;
 		song.addAlbum(this);
 		songList.add(song);
+		if(parentAlbum!=null)
+			parentAlbum.addSong(song);
 		
 		assertTrue(containsSong(song));
 	}
 	public void removeSong(SoundClip song)
 	{
 		assertNotNull(song);
-		assertTrue(songList.contains(song));
-		song.removeAlbum(this);
-		songList.remove(song);
-		assertFalse(containsSong(song));
+		
+		if(!songList.contains(song))
+			return;
+		if(parentAlbum!=null) // Do not remove from root.
+		{
+			song.removeAlbum(this);
+			songList.remove(song);
+			
+			assertFalse(containsSong(song));
+		}
+		for(Album a : subAlbums)
+			a.removeSong(song);
 	}
 	
 	/* Check if an album is a subalbum of this album tree.

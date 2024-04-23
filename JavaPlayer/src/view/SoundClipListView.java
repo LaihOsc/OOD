@@ -23,14 +23,32 @@ public class SoundClipListView extends ListView<SoundClip> {
 		clips = new ArrayList<>();
 	}
 	
+	public void getSubAlbumSongsRecursively(Album album)
+	{
+		for (SoundClip song: album.getSongs()) {
+			if (!clips.contains(song)) {
+				clips.add(song);
+			}
+		}
+		
+		if (album.getSubAlbums().size() > 0) {
+			for (Album subAlbum: album.getSubAlbums()) {
+				getSubAlbumSongsRecursively(subAlbum);
+			}
+			
+		}
+	}
+	
 	/**
-	 * Displays the contents of the specified album
+	 * Displays the contents of the specified album and all subalbums
 	 * @param album - the album which contents are to be displayed
 	 */
 	public void display(Album album)
 	{
 		this.getItems().clear();
-		clips = album.getSongs();
+//		clips = album.getSongs();
+		getSubAlbumSongsRecursively(album);
+		
 		ObservableList<SoundClip> temp = FXCollections.observableList(clips);
 		this.setItems(temp);
 	}

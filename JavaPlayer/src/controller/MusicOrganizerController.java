@@ -2,20 +2,26 @@ package controller;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
 
+import javafx.scene.control.Alert;
 import model.Album;
 import model.SoundClip;
 import model.SoundClipBlockingQueue;
 import model.SoundClipLoader;
 import model.SoundClipPlayer;
 import view.MusicOrganizerWindow;
+import view.AlbumWindow;
+import view.MusicOrganizerObserver;
 
 public class MusicOrganizerController {
 
 	private MusicOrganizerWindow view;
 	private SoundClipBlockingQueue queue;
 	private Album root;
+	private List<AlbumWindow> albumWindows;
+	private List<MusicOrganizerObserver> observers;
 	
 	public MusicOrganizerController() {
 
@@ -28,6 +34,22 @@ public class MusicOrganizerController {
 		// Create a separate thread for the sound clip player and start it
 		
 		(new Thread(new SoundClipPlayer(queue))).start();
+		
+		// Create a list for album windows.
+		albumWindows = new ArrayList<>();
+		
+		// Create a list for the observers.
+		observers = new ArrayList<>();
+	}
+	
+	public void registerObserver(MusicOrganizerObserver observer) {
+		observers.add(observer);
+	}
+	
+	private void notifyObservers(Album album) {
+		for (MusicOrganizerObserver observer: observers) {
+			observer.update(album, root);
+		}
 	}
 	
 	/**
@@ -62,6 +84,7 @@ public class MusicOrganizerController {
 		Album newAlbum = Album.createSubAlbum(albumName, parentAlbum);
 		view.displayMessage("Created new album '"+albumName+"' under '"+parentAlbum.getAlbumName()+"'");
 		view.onAlbumAdded(newAlbum);
+		notifyObservers(parentAlbum);
 	}
 	
 	/**
@@ -76,6 +99,7 @@ public class MusicOrganizerController {
 			parent.removeSubAlbum(targetAlbum);
 			view.onAlbumRemoved();
 			view.onClipsUpdated();
+			notifyObservers(targetAlbum);
 		}
 	}
 	
@@ -95,6 +119,7 @@ public class MusicOrganizerController {
 		}
 		if( bModified )
 			view.onClipsUpdated();
+			notifyObservers(targetAlbum);
 	}
 	
 	/**
@@ -113,6 +138,7 @@ public class MusicOrganizerController {
 		}
 		if( bModified )
 			view.onClipsUpdated();
+			notifyObservers(targetAlbum);
 	}
 	
 	/**
@@ -126,6 +152,26 @@ public class MusicOrganizerController {
 		queue.enqueue(l);
 		for(int i=0;i<l.size();i++) {
 			view.displayMessage("Playing " + l.get(i));
+		}
+	}
+	
+	
+	/**
+	 * Method for opening a new album window.
+	 */
+	public void openAlbumWindow(Album album) {
+		if (album != null) {
+			AlbumWindow albumWindow = new AlbumWindow();
+			registerObserver(albumWindow);
+			albumWindow.openAlbum(album, queue, view);
+			albumWindows.add(albumWindow);
+			// Alerts the user is no album is selected.
+		} else {
+			Alert alert = new Alert(Alert.AlertType.WARNING);
+			alert.setTitle("No album selected");
+			alert.setHeaderText(null);
+			alert.setContentText("You need to select an album before opening a new window...");
+			alert.showAndWait();
 		}
 	}
 }

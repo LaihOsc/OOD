@@ -9,8 +9,10 @@ import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 import model.Album;
 import model.SoundClip;
+import view.AlbumWindow;
 
 public class ButtonPaneHBox extends HBox {
 
@@ -22,6 +24,7 @@ public class ButtonPaneHBox extends HBox {
 	private Button addSoundClipsButton;
 	private Button removeSoundClipsButton;	
 	private Button playButton;
+	private Button albumWindowButton;
 	public static final int BUTTON_MIN_WIDTH = 150;
 
 	
@@ -45,6 +48,9 @@ public class ButtonPaneHBox extends HBox {
 		
 		playButton = createPlaySoundClipsButton();
 		this.getChildren().add(playButton);
+		
+		albumWindowButton = createNewAlbumWindowButton();
+		this.getChildren().add(albumWindowButton);
 		
 
 	}
@@ -121,6 +127,20 @@ public class ButtonPaneHBox extends HBox {
 		button.setMinWidth(BUTTON_MIN_WIDTH);
 		button.setOnAction(e->{
 			controller.playSoundClips();
+		});
+		return button;
+	}
+	
+	private Button createNewAlbumWindowButton() {
+		Button button = new Button("New album window");
+		button.setTooltip(new Tooltip("Open an album in a new window"));
+		button.setMinWidth(BUTTON_MIN_WIDTH);
+		button.setOnAction(e->{
+			Album selectedAlbum = view.getSelectedAlbum();
+			if (selectedAlbum != null) {
+				controller.openAlbumWindow(selectedAlbum);
+			}
+			// Open a window of the selected album
 		});
 		return button;
 	}

@@ -83,7 +83,7 @@ public class MusicOrganizerController {
 	{
 		Album newAlbum = Album.createSubAlbum(albumName, parentAlbum);
 		view.displayMessage("Created new album '"+albumName+"' under '"+parentAlbum.getAlbumName()+"'");
-		view.onAlbumAdded(newAlbum);
+		view.onAlbumAdded(parentAlbum, newAlbum);
 		notifyObservers(parentAlbum);
 	}
 	
@@ -97,7 +97,7 @@ public class MusicOrganizerController {
 		{
 			view.displayMessage("Removed album '"+targetAlbum.getAlbumName()+"'");
 			parent.removeSubAlbum(targetAlbum);
-			view.onAlbumRemoved();
+			view.onAlbumRemoved(targetAlbum);
 			view.onClipsUpdated();
 			notifyObservers(targetAlbum);
 		}

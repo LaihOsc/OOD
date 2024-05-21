@@ -2,6 +2,7 @@ package controller;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -35,20 +36,32 @@ public class MusicOrganizerController {
 		
 		(new Thread(new SoundClipPlayer(queue))).start();
 		
-		// Create a list for album windows.
-		albumWindows = new ArrayList<>();
-		
 		// Create a list for the observers.
 		observers = new ArrayList<>();
 	}
 	
-	public void registerObserver(MusicOrganizerObserver observer) {
+	public void registerObserver(MusicOrganizerObserver observer)
+	{
 		observers.add(observer);
 	}
+	public void unregisterObserver(MusicOrganizerObserver observer)
+	{
+		observers.remove(observer);
+	}
+	public void clearObservers()
+	{
+		for (MusicOrganizerObserver observer: observers)
+			observer.notifyClose();
+		observers.clear();
+	}
 	
-	private void notifyObservers(Album album) {
-		for (MusicOrganizerObserver observer: observers) {
-			observer.update(album, root);
+	private void notifyObservers(Album album)
+	{
+		for (ListIterator<MusicOrganizerObserver> it=observers.listIterator(); it.hasNext();)
+		{
+			MusicOrganizerObserver obs = it.next();
+			if(obs.update(album))
+				it.remove();
 		}
 	}
 	
@@ -161,10 +174,8 @@ public class MusicOrganizerController {
 	 */
 	public void openAlbumWindow(Album album) {
 		if (album != null) {
-			AlbumWindow albumWindow = new AlbumWindow();
+			AlbumWindow albumWindow = new AlbumWindow(album, queue, view, this);
 			registerObserver(albumWindow);
-			albumWindow.openAlbum(album, queue, view);
-			albumWindows.add(albumWindow);
 			// Alerts the user is no album is selected.
 		} else {
 			Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -174,4 +185,6 @@ public class MusicOrganizerController {
 			alert.showAndWait();
 		}
 	}
+	
+	
 }

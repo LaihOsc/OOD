@@ -1,6 +1,9 @@
 package model;
 import static org.junit.Assert.*;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 /**
@@ -66,5 +69,17 @@ public class SoundClip
 		assertTrue(albums.contains(a));
 		
 		albums.remove(a);
+	}
+	
+	// Serializer
+	public void serializeOut(OutputStream ar) throws IOException
+	{
+		Album.serializeString(ar, file.toString());
+	}
+	
+	public static SoundClip serializeIn(InputStream ar) throws IOException
+	{
+		String clipName = Album.serializeString(ar);
+		return new SoundClip(new File(clipName));
 	}
 }

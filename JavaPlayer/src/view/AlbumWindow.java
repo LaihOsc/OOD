@@ -21,51 +21,66 @@ import model.SoundClipPlayer;
 
 public class AlbumWindow extends Stage implements MusicOrganizerObserver {
 	
-	private static MusicOrganizerController controller;
+	private MusicOrganizerController controller;
 	private SoundClipListView soundClipTable;
 	private Album currentAlbum;
 	
-	
+	public AlbumWindow(Album album, SoundClipBlockingQueue queue, MusicOrganizerWindow view, MusicOrganizerController inController)
+	{
+		controller = inController;
+		
+		this.setOnCloseRequest(e->{
+			onWindowClosed();
+		});
+		currentAlbum = album;
+		 
+		// Create a layout
+		BorderPane layout = new BorderPane();
+		 
+		// Set the scene with the layout
+		Scene scene = new Scene(layout, 600, 400); 
+		setTitle(album.getAlbumName());
+		 
+		// Create the list in the right of the GUI
+		soundClipTable = createSoundClipListView(album, queue, view);
+		layout.setCenter(soundClipTable);
+		scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+		setScene(scene);
+		 
+		//Show the window
+		show();
+	}
 	
 	@Override
-	public void update(Album album, Album rootAlbum) {
-		//Checks if update concerns the window.
-		
-		if (!rootAlbum.containsAlbum(album)) {
+	public boolean update(Album changed)
+	{
+		// Check if this or my parent album was deleted.
+		if (!controller.getRootAlbum().containsAlbum(currentAlbum))
+		{
 			close();
+			return true; // Return true to remove this from observers list.
 		}
 		
-		if (album.getAlbumName() == currentAlbum.getAlbumName()) {
-			soundClipTable.display(album);
-		}
-		
+		// Check if songs were added or removed from this or child album.
+		if (changed == currentAlbum || currentAlbum.containsAlbum(changed))
+			soundClipTable.display(changed);
+		return false;
 	}
-    
-    public void openAlbum(Album album, SoundClipBlockingQueue queue, MusicOrganizerWindow view) {
-    	
-    	currentAlbum = album;
-         
-         // Create a layout
-         BorderPane layout = new BorderPane();
-         
-         
-         // Set the scene with the layout
-         Scene scene = new Scene(layout, 600, 400);
-         
-         setTitle(album.getAlbumName());
-         
-		 // Create the list in the right of the GUI
-		 soundClipTable = createSoundClipListView(album, queue, view);
-		 layout.setCenter(soundClipTable);
-		 
-		 scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
-
-         setScene(scene);
-         
-         
-         //Show the window
-         show();
-    }
+	
+	@Override
+	public void notifyClose()
+	{
+		close();
+	}
+	
+	private void onWindowClosed()
+	{
+		if (controller!=null)
+		{
+			controller.unregisterObserver(this);
+			controller = null;
+		}
+	}
  
 	private SoundClipListView createSoundClipListView(Album album, SoundClipBlockingQueue queue, MusicOrganizerWindow view) {
 		SoundClipListView v = new SoundClipListView();

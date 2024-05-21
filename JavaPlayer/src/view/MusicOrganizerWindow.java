@@ -77,7 +77,7 @@ public class MusicOrganizerWindow extends Application {
 						saveAsHTML(selectedFile);
 					}
 					if (filePath.endsWith(".ahl")) {
-						// SaveAsAHL method
+						saveAsAHL(selectedFile);
 					}
 				}
 
@@ -90,7 +90,7 @@ public class MusicOrganizerWindow extends Application {
 						new ExtensionFilter("Album Hierarchy", "*.ahl"));
 				File selectedFile = loadChooser.showOpenDialog(primaryStage);
 				if (selectedFile != null)
-					loadAlbumsFrom(selectedFile);
+					loadFromAHL(selectedFile);
 			});
 			MenuItem menuItem3 = new MenuItem("Exit");
 			menuItem3.setOnAction(e -> {
@@ -230,22 +230,6 @@ public class MusicOrganizerWindow extends Application {
 		return soundClipTable.getSelectedClips();
 	}
 
-	private void saveAlbumsTo(File outFile) {
-		try {
-			FileOutputStream fout = new FileOutputStream(outFile, true);
-			fout.close();
-		} catch (FileNotFoundException e) {
-			displayMessage("Failed to write output file: " + outFile.toString());
-			return;
-		} catch (IOException e) {
-		}
-		displayMessage("Exported hierarchy to: " + outFile.toString());
-	}
-
-	private void loadAlbumsFrom(File outFile) {
-		displayMessage("Imported hierarchy from: " + outFile.toString());
-	}
-
 	/**
 	 * *****************************************************************
 	 * Methods to be called in response to events in the Music Organizer
@@ -297,12 +281,58 @@ public class MusicOrganizerWindow extends Application {
 		Album a = getSelectedAlbum();
 		soundClipTable.display(a);
 	}
-
+	
+	// Refresh albums and songs windows.
+	public void refreshEverything()
+	{
+		controller.clearObservers();
+		TreeItem<Album> root = tree.getRoot();
+		root.getChildren().clear();
+		Album rootAlbum = controller.getRootAlbum();
+		populateAlbums(root, rootAlbum);
+		root.setExpanded(true); // automatically expand the root node in the tree
+	}
+	
+	// Recursively populate album tree.
+	private void populateAlbums(TreeItem<Album> tree, Album album)
+	{
+		for(Album a : album.getSubAlbums())
+		{
+			TreeItem<Album> child = new TreeItem<>(a);
+			tree.getChildren().add(child);
+			populateAlbums(child,a);
+		}
+	}
+	
+	private void saveAsAHL(File file) {
+		try (FileOutputStream  writer = new FileOutputStream(file)) {
+			// Write the data to the file
+			controller.getRootAlbum().serializeOut(writer);
+			writer.close();
+			displayMessage("File saved successfully: " + file.getPath());
+		} catch (IOException e) {
+			displayMessage("Error saving file: " + e.getMessage());
+		}
+	}
+	
+	private void loadFromAHL(File file) {
+		try (FileInputStream  reader = new FileInputStream(file)) {
+			// Write the data to the file
+			controller.getRootAlbum().serializeIn(reader);
+			reader.close();
+			displayMessage("Imported hierarchy from: " + file.getPath());
+		} catch (IOException e) {
+			displayMessage("Error loading file: " + e.getMessage());
+		}
+		refreshEverything();
+	}
+	
 	private void saveAsHTML(File file) {
 		try (FileWriter writer = new FileWriter(file)) {
 			// Write the data to the file
 			String htmlContent = generateHtmlContent();
 			writer.write(htmlContent);
+			writer.close();
 			displayMessage("File saved successfully: " + file.getPath());
 		} catch (IOException e) {
 			displayMessage("Error saving file: " + e.getMessage());

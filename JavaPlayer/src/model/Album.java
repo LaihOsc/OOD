@@ -1,6 +1,9 @@
 package model;
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 /* Album:
@@ -168,5 +171,60 @@ public class Album {
 			System.out.println(intend+"}");
 		}
 	}
+	
+	// Serializer
+	public static void serializeString(OutputStream ar, String text) throws IOException
+	{
+		ar.write(text.length());
+		ar.write(text.getBytes());
+	}
+	public static String serializeString(InputStream ar) throws IOException
+	{
+		final int len = ar.read();
+		byte nameBytes[] = new byte[len];
+		ar.read(nameBytes);
+		return new String(nameBytes);
+	}
+	
+	public void serializeOut(OutputStream ar) throws IOException
+	{
+		// First write album name.
+		serializeString(ar,albumName);
+		
+		// Then subalbums
+		ar.write(subAlbums.size());
+		for(Album a : subAlbums)
+			a.serializeOut(ar);
+		
+		// Then clips in this album.
+		ar.write(songList.size());
+		for(SoundClip c : songList)
+			c.serializeOut(ar);
+	}
+	
+	public void serializeIn(InputStream ar) throws IOException
+	{
+		// Reset.
+		songList.clear();
+		subAlbums.clear();
+		
+		// Read album name.
+		albumName = serializeString(ar);
+		
+		// Then subalbums
+		final int numSubs = ar.read();
+		for(int i=0; i<numSubs; ++i)
+		{
+			Album newAlbum = createSubAlbum("",this);
+			newAlbum.serializeIn(ar);
+		}
+		
+		// Then clips.
+		final int numClips = ar.read();
+		for(int i=0; i<numClips; ++i)
+		{
+			SoundClip newClip = SoundClip.serializeIn(ar);
+			addSong(newClip);
+		}
+	}
 }
-
